@@ -1,0 +1,7 @@
+# sen-TapIn allow-list (REQ-F-008)
+# Copy this file to the ROOT of the MicroSD card (FAT32).
+# One card per line:  UID,Name
+# UID is uppercase hex with no separators, e.g. 04A2B3C4
+# Names must not contain commas. Lines starting with # are ignored.
+# Example:
+# 04A2B3C4,R. Madanayaka
