@@ -60,7 +60,10 @@ first event (schema: `timestamp,uid,name,direction,result`).
 5. Reset: `main.py` runs automatically.
 
 Full wiring instructions, bring-up checklist, and troubleshooting are in
-**`sen-TapIn_Wiring_and_Setup.pdf`** in the parent folder.
+[`docs/WIRING.md`](docs/WIRING.md) (Markdown) and
+[`docs/sen-TapIn_Wiring_and_Setup.pdf`](docs/sen-TapIn_Wiring_and_Setup.pdf)
+(original PDF); the process flow is
+[`docs/sen-TapIn.png`](docs/sen-TapIn.png).
 
 ## Safety notes (REQ-SPEC-003 §5)
 
