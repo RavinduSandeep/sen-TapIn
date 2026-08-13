@@ -1,4 +1,8 @@
 # sen-TapIn allow-list (REQ-F-008)
+# rev: 1
+# Increment 'rev' whenever this file is edited. It is shown at boot and
+# recorded in events.log, so a terminal can be asked which roster it is
+# enforcing without reading the whole file back off the card.
 # Copy this file to the ROOT of the MicroSD card (FAT32).
 # One card per line:  UID,Name
 # UID is uppercase hex with no separators, e.g. 04A2B3C4

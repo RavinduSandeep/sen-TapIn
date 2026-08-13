@@ -1,4 +1,4 @@
-# 2sd_log.py — sen-TapIn v0.1.0 (+mp)
+# sd_log.py — sen-TapIn
 # SD mount, allow-list read, append-only attendance log
 # (REQ-F-006, REQ-F-008, REQ-NF-003). CS-003 §7: the log is written by
 # the single function log_append() so the record format cannot drift.
@@ -13,12 +13,18 @@ from sdcard import SDCard
 
 _ALLOWLIST_TEMPLATE = (
     "# sen-TapIn allow-list (REQ-F-008)\n"
+    "# rev: 1\n"
+    "# Increment 'rev' whenever this file is edited. It is shown at boot\n"
+    "# and recorded in events.log so a terminal can be asked which roster\n"
+    "# it is enforcing without reading the whole file back off the card.\n"
     "# One card per line:  UID,Name\n"
     "# UID is uppercase hex with no separators, e.g. 04A2B3C4\n"
     "# Names must not contain commas. Lines starting with # are ignored.\n"
     "# Example:\n"
     "# 04A2B3C4,R. Madanayaka\n"
 )
+
+_REV_PREFIX = "rev:"
 
 _mounted = False
 
@@ -98,6 +104,37 @@ def sd_read_allowlist():
     return True, table
 
 
+def sd_allowlist_rev():
+    """Read the allow-list revision marker. Returns (ok, revision).
+
+    The marker is a comment line of the form '# rev: 3' anywhere in the
+    file. Because sd_read_allowlist() already skips '#' lines, adding it
+    changes nothing for existing cards or for firmware that predates it.
+
+    A missing or unparseable marker is revision 0, not a fault — the
+    revision is informational here and the terminal must operate without
+    it. Only an unreadable file returns not-ok.
+    """
+    if not _mounted:
+        return False, 0
+    try:
+        with open(config.ALLOWLIST_PATH) as f:
+            for line in f:
+                line = line.strip()
+                if not line.startswith("#"):
+                    continue
+                body = line[1:].strip().lower()
+                if not body.startswith(_REV_PREFIX):
+                    continue
+                try:
+                    return True, int(body[len(_REV_PREFIX):].strip())
+                except ValueError:
+                    return True, 0
+    except OSError:
+        return False, 0
+    return True, 0
+
+
 def _directions_from_lines(lines):
     """Pure helper: last GRANTED direction per UID from log lines."""
     table = {}
@@ -149,6 +186,30 @@ def log_append(timestamp, uid, name, direction, result):
             f.flush()
         _sync()
     except OSError:
+        return False
+    return True
+
+
+def log_event(timestamp, event, detail):
+    """Append one diagnostic record to events.log. Returns True/False.
+
+    DELIBERATE ASYMMETRY WITH log_append(): the return value is advisory
+    and callers are expected to ignore it. log_append() fails closed
+    because attendance is the audit record (CS-003 §5, REQ-NF-003);
+    events.log is diagnostic only, so a write failure is reported on
+    serial and operation continues. Treating it as a fault would let a
+    full or unwritable card take a working terminal out of service over
+    a record nobody depends on.
+    """
+    if not _mounted:
+        return False
+    try:
+        with open(config.EVENTS_PATH, "a") as f:
+            f.write("%s,%s,%s\n" % (timestamp, event, detail))
+            f.flush()
+        _sync()
+    except OSError as e:
+        print("events.log write failed (ignored):", repr(e))
         return False
     return True
 

@@ -1,4 +1,4 @@
-# nfc.py — sen-TapIn v0.1.0 (+mp)
+# nfc.py — sen-TapIn
 # PN532 (DFRobot Gravity DFR0231-H) UID read over I2C (REQ-F-001).
 # The module's mode selector must be set to I2C (HDD-003 §2.2).
 #

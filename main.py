@@ -1,4 +1,4 @@
-# main.py — sen-TapIn v0.1.0 (+mp)
+# main.py — sen-TapIn
 # The state machine and start-up / fault handling (CS-003 §6).
 #
 # Deviation from CS-003 §6 / REQ-SPEC-003: the IN/OUT buttons are not
@@ -19,6 +19,7 @@ import nfc
 import rtc
 import sd_log
 import ui
+import version
 
 STATE_IDLE = "IDLE"
 STATE_DECIDING = "DECIDING"
@@ -32,6 +33,10 @@ DIR_NONE = "-"          # denied taps have no toggle state
 
 RESULT_GRANTED = "GRANTED"
 RESULT_DENIED = "DENIED"
+
+# Composed here rather than in ui.py so the display layer stays dumb
+# (CS-003 §2) and version.py remains the only declaration of the number.
+_VERSION_TEXT = "v%s (%s)" % (version.FIRMWARE, version.BUILD)
 
 _relay = None
 
@@ -63,7 +68,10 @@ def _startup(i2c):
     """
     if not ui.ui_init(i2c):
         return False, "OLED init"
-    ui.ui_show_boot()
+    # Drawn before the card is mounted, so the revision is not known yet:
+    # showing the version immediately keeps the early "the OLED works"
+    # signal that is useful during bring-up.
+    ui.ui_show_boot(_VERSION_TEXT)
     if not rtc.rtc_init(i2c):
         return False, "RTC not found"
     if not nfc.nfc_init(i2c):
@@ -72,7 +80,25 @@ def _startup(i2c):
         return False, "SD card"
     if not sd_log.sd_ensure_allowlist():
         return False, "allow-list"
+    _record_boot()
     return True, None
+
+
+def _record_boot():
+    """Redraw the boot screen with the roster revision and note the boot
+    in events.log. Diagnostic only — nothing here can fault the
+    terminal, so an unreadable marker or a failed write is not an error.
+    """
+    ok, rev = sd_log.sd_allowlist_rev()
+    if not ok:
+        rev = 0
+    ui.ui_show_boot(_VERSION_TEXT, rev)
+    ok, ts = rtc.rtc_now()
+    if not ok:
+        # _run() will fault on the next RTC read; do not pre-empt it here
+        return
+    sd_log.log_event(ts, "BOOT",
+                     "fw=%s%s rev=%d" % (version.FIRMWARE, version.BUILD, rev))
 
 
 def _next_direction(directions, uid):

@@ -1,4 +1,4 @@
-# ui.py — sen-TapIn v0.1.1 (+mp)
+# ui.py — sen-TapIn
 # OLED, WS2811 RGB, and buzzer feedback (CS-003 §2).
 # All draw/colour/tone values come from named constants in config.py;
 # nothing here decides anything — main.py owns the state machine.
@@ -165,12 +165,21 @@ def _screen(lines):
     _oled.show()
 
 
-def ui_show_boot():
-    _screen((
+def ui_show_boot(version_text, rev=None):
+    """Boot screen. version_text comes from main.py (version.py is the
+    single source); rev is the allow-list revision, or None before the
+    card is mounted and it is not yet known.
+
+    Both strings fit the 16-character line width of the 8 px font.
+    """
+    lines = [
         (0, 8, "sen-TapIn"),
-        (0, 24, "v0.1.0 (+mp)"),
-        (0, 44, "starting..."),
-    ))
+        (0, 24, version_text),
+    ]
+    if rev is not None:
+        lines.append((0, 40, "roster rev %d" % rev))
+    lines.append((0, 56, "starting..."))
+    _screen(lines)
 
 
 def ui_show_idle(timestamp):

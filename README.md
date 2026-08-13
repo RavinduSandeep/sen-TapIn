@@ -1,6 +1,7 @@
 # sen-TapIn — NFC Access & Attendance Terminal
 
-**v0.1.0 (baseline), build variant `+mp` (MicroPython, Layer 1)**
+**v0.1.2, build variant `+mp` (MicroPython, Layer 1)** — the version is
+declared once in `version.py` and shown on the boot screen.
 
 Firmware for the Raspberry Pi Pico 2 W terminal defined by:
 
@@ -35,6 +36,7 @@ owns both documents).
 
 | File | Responsibility |
 |---|---|
+| `version.py` | Single source of the firmware version string. |
 | `board.py` | Single source of pin numbers and I2C addresses (HDD-003 §3). No logic. |
 | `config.py` | Tunable constants (delays, colours, tones, file paths) — CS-003 §9. |
 | `rtc.py` | DS3231 read/set; timestamps for logging. |
@@ -47,8 +49,19 @@ owns both documents).
 | `lib/sdcard.py` | Third-party SD SPI driver (micropython-lib). |
 
 `sd-card/allowlist.txt` is a template to copy to the root of the MicroSD
-card. The attendance log `attendance.csv` is created automatically on
-first event (schema: `timestamp,uid,name,direction,result`).
+card. It carries an optional `# rev: N` marker: bump it whenever the
+roster is edited and the terminal will show that number at boot, so a
+deployed unit can be asked which roster it is enforcing. A missing or
+unreadable marker reads as revision 0 and is not a fault.
+
+The attendance log `attendance.csv` is created automatically on first
+event (schema: `timestamp,uid,name,direction,result`).
+
+A second file, `events.log`, records one line per power-up
+(`timestamp,BOOT,fw=... rev=...`). It is diagnostic only and is **not**
+part of the REQ-SPEC-003 §4 record: unlike `attendance.csv`, a failed
+write to it is reported on serial and ignored, so a full or unwritable
+card can never stop the terminal from deciding and logging attendance.
 
 ## Install
 

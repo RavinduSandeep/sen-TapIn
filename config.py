@@ -1,4 +1,4 @@
-# config.py — sen-TapIn v0.1.0 (+mp)
+# config.py — sen-TapIn
 # Tunable configuration constants (CS-003 §9), kept separate from the
 # pin map in board.py so configuration and wiring do not mix.
 # Timing defaults come from REQ-SPEC-003 §6 and may be tuned during
@@ -63,3 +63,9 @@ SD_MOUNT = "/sd"
 ALLOWLIST_PATH = "/sd/allowlist.txt"      # REQ-F-008: human-readable UID,Name
 LOG_PATH = "/sd/attendance.csv"           # REQ-F-006: append-only event log
 LOG_HEADER = "timestamp,uid,name,direction,result\n"  # REQ-SPEC-003 §4 schema
+
+# Diagnostic log, separate from the attendance record above. Not part of
+# the REQ-SPEC-003 §4 schema and deliberately NOT fail-closed: a write
+# failure here is printed to serial and ignored, so an unwritable or full
+# card can never stop the terminal deciding and logging attendance.
+EVENTS_PATH = "/sd/events.log"

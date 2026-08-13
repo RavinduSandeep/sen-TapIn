@@ -1,4 +1,4 @@
-# rtc.py — sen-TapIn v0.1.0 (+mp)
+# rtc.py — sen-TapIn
 # DS3231 read/set over the shared I2C bus; returns timestamps for
 # logging (REQ-F-007, REQ-NF-004). CS-003 §5: every function that can
 # fail returns a status the caller must check.

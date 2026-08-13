@@ -1,4 +1,4 @@
-# board.py — sen-TapIn v0.1.1 (+mp)
+# board.py — sen-TapIn
 # Single source of the frozen pin map and I2C addresses from HDD-003 §3.
 # CS-003 §3: every pin number and bus address is declared exactly once,
 # here, and referenced nowhere else by literal value (REQ-NF-005 /
