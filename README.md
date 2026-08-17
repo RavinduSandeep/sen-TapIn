@@ -89,3 +89,25 @@ Full wiring instructions, bring-up checklist, and troubleshooting are in
 
 The optional Wi-Fi log-viewing page (REQ-F-011) is a stretch goal and is
 not implemented in this baseline.
+
+
+## Networking (v0.2.0)
+
+The terminal can check in to a manifest URL over Wi-Fi, compare its
+roster revision, and report its firmware version. Copy
+`sd-card/terminal.conf` to the card root and fill in the SSID, password,
+terminal id and manifest URL. That file holds a password and is
+deliberately not in the repository.
+
+**Networking is optional and cannot fault the terminal.** With no
+`terminal.conf`, a wrong password or a dead router, the terminal grants,
+denies and logs exactly as it did in v0.1.2, using the roster already on
+its card. The idle screen shows the age of the last successful check-in,
+flagged with `!` once it exceeds 24 h, because an offline terminal is
+still enforcing an old roster — including any badges since revoked.
+
+This build does **not** download or replace the roster. Downloading,
+Ed25519 signature verification and the atomic swap follow separately.
+
+The optional Wi-Fi log-viewing page (REQ-F-011) is a stretch goal and is
+not implemented in this baseline.
