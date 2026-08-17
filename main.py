@@ -15,9 +15,11 @@ from machine import I2C, Pin
 import access
 import board
 import config
+import net
 import nfc
 import rtc
 import sd_log
+import sync
 import ui
 import version
 
@@ -81,7 +83,38 @@ def _startup(i2c):
     if not sd_log.sd_ensure_allowlist():
         return False, "allow-list"
     _record_boot()
+    _network_init()
     return True, None
+
+
+def _network_init():
+    """Bring up networking. NOT part of the fault chain.
+
+    Deliberately called after _startup()'s checks have all passed and
+    deliberately returning nothing: no Wi-Fi failure may stop the
+    terminal. A missing terminal.conf, a wrong password or a dead router
+    leaves the terminal working exactly as it did before this feature
+    existed, on the roster already present on its card.
+    """
+    ok, conf = sync.sync_load_conf(config.TERMINAL_CONF_PATH)
+    if not ok:
+        print("net: no terminal.conf, networking disabled")
+        return
+    if sync.sync_init(conf):
+        print("net: enabled for", conf.get("terminal_id", "unknown"))
+
+
+def _check_in(now, clock, local_rev):
+    """Run one manifest check-in. Diagnostic only — cannot fault.
+
+    Blocks for up to config.HTTP_TIMEOUT_MS. main._run() only reaches
+    here from IDLE, after sync.sync_due() has confirmed the terminal has
+    been tap-free for the idle guard. The result goes to events.log via
+    log_event(), which is itself not fail-closed, so nothing on this
+    path can take the terminal out of service.
+    """
+    ok, detail = sync.sync_check_in(now, clock, local_rev, version.FIRMWARE)
+    sd_log.log_event(clock, "SYNC" if ok else "SYNC_FAIL", detail)
 
 
 def _record_boot():
@@ -112,6 +145,9 @@ def _run():
     ok, directions = sd_log.sd_last_directions()
     if not ok:
         return "log read"
+    ok, local_rev = sd_log.sd_allowlist_rev()
+    if not ok:
+        local_rev = 0
 
     state = STATE_IDLE
     uid = None
@@ -120,6 +156,7 @@ def _run():
     direction = DIR_NONE
     last_tap = {}           # uid -> tick of its last decided tap
     next_refresh = time.ticks_ms()
+    idle_since = time.ticks_ms()   # last time a tap was decided
 
     ui.ui_rgb(config.COLOR_IDLE)
     if not nfc.nfc_start_listen():
@@ -129,12 +166,20 @@ def _run():
         now = time.ticks_ms()
 
         if state == STATE_IDLE:
+            # net_tick() returns immediately; it never waits on the radio
+            net.net_tick(now)
             if time.ticks_diff(now, next_refresh) >= 0:
                 ok, ts = rtc.rtc_now()
                 if not ok:
                     return "RTC read"
-                ui.ui_show_idle(ts)  # REQ-F-009: clock + tap prompt
+                # REQ-F-009: clock + tap prompt, plus sync age when
+                # networking is configured (empty string when it is not)
+                ui.ui_show_idle(ts, sync.sync_status_text(now))
                 next_refresh = time.ticks_add(now, config.IDLE_REFRESH_MS)
+                if sync.sync_due(now, idle_since):
+                    _check_in(now, ts, local_rev)
+                    now = time.ticks_ms()
+                    next_refresh = time.ticks_add(now, config.IDLE_REFRESH_MS)
             ok, got = nfc.nfc_read_uid()
             if not ok:
                 return "NFC read"
@@ -156,6 +201,7 @@ def _run():
                 state = STATE_IDLE
                 continue
             last_tap[uid] = now
+            idle_since = now
             # Allow-list is read at decision time (HDD-003 §2.5) so edits
             # to the file apply without a restart
             ok, allowlist = sd_log.sd_read_allowlist()
@@ -219,6 +265,7 @@ def main():
         # de-energised, and retry start-up until the fault clears
         _relay_set(False)
         nfc.nfc_abort()
+        net.net_down()
         print("FAULT:", message)
         ui.ui_rgb(config.COLOR_FAULT)
         ui.ui_show_fault(message)
