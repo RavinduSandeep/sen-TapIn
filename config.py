@@ -69,20 +69,3 @@ LOG_HEADER = "timestamp,uid,name,direction,result\n"  # REQ-SPEC-003 §4 schema
 # failure here is printed to serial and ignored, so an unwritable or full
 # card can never stop the terminal deciding and logging attendance.
 EVENTS_PATH = "/sd/events.log"
-
-
-# Association is incremental (net.net_tick), so this timeout bounds an
-# attempt, not a blocking wait.
-WIFI_CONNECT_TIMEOUT_MS = 15_000
-WIFI_RETRY_MS = 30_000        # back-off after a failed association
-
-# net.net_http_get() BLOCKS for up to this long. It is gated behind the
-# idle guard below so it cannot easily land mid-tap. Keep it short: this
-# is the one place networking can delay a card read (REQ-NF-001).
-HTTP_TIMEOUT_MS = 2_000
-HTTP_MAX_BODY = 2_048         # memory guard on the manifest response
-
-SYNC_INTERVAL_MS = 900_000    # 15 min between successful check-ins
-SYNC_RETRY_MS = 60_000        # sooner retry after a failure
-SYNC_IDLE_GUARD_MS = 3_000    # terminal must be tap-free this long first
-SYNC_STALE_MS = 86_400_000    # 24 h; older than this is flagged on screen

@@ -146,3 +146,12 @@ cooperative 20 ms tick. Never put a blocking call in the tap path.
 - [ ] Comments explain reasoning, not mechanics. `# increment counter` is noise;
       `# commit the toggle only once the record is on the card` is the comment worth writing
 
+## A note on review
+
+Expect changes to come back with questions. That is the review working, not a judgement of you.
+The questions worth taking seriously are the ones about failure paths — what happens when the card
+is full, when the RTC does not answer, when power drops mid-write. Code that handles those is the
+difference between a project and a product.
+
+If you disagree with a review comment, say so and explain why. Being talked out of a bad change is
+useful; being talked out of a good one because you did not argue for it is not.

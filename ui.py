@@ -182,20 +182,14 @@ def ui_show_boot(version_text, rev=None):
     _screen(lines)
 
 
-def ui_show_idle(timestamp, sync_text=""):
+def ui_show_idle(timestamp):
     # REQ-F-009: idle shows RTC time and the tap prompt (always listening)
-    # sync_text is composed by sync.py and is empty when networking is
-    # not configured, so a terminal with no Wi-Fi looks exactly as it did
-    # before this feature existed.
-    lines = [
+    _screen((
         (0, 0, "sen-TapIn"),
         (0, 20, timestamp[11:19]),   # HH:MM:SS
         (0, 32, timestamp[0:10]),    # YYYY-MM-DD
         (0, 52, "Tap your card"),
-    ]
-    if sync_text:
-        lines.insert(3, (0, 42, sync_text[:16]))
-    _screen(lines)
+    ))
 
 
 def ui_show_granted(name, direction):
