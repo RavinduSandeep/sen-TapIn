@@ -24,7 +24,7 @@ a timing — should be written here even if the code change was one line.
 
 Nothing yet.
 
-## [0.2.0+mp] — pending hardware verification
+## [0.2.0+mp] — hardware-verified 2026-08-17
 
 Network check-in. The terminal associates to Wi-Fi, fetches a manifest, compares its roster
 revision against it, and reports what it is running. **It does not download or replace the
@@ -87,6 +87,20 @@ roster** — that is the next issue.
 - Restored the "A note on review" section of `CONTRIBUTING.md`, deleted without mention.
 - Removed a duplicated REQ-F-011 stretch-goal paragraph in `README.md` and pointed its setup
   instructions at the renamed template.
+
+### Hardware verification (2026-08-17, Pico 2 W / RP2350, MicroPython 1.25.0-preview)
+- I2C scan found every HDD-003 §3.1 device at its frozen address: PN532 0x24, SSD1306 0x3C,
+  DS3231 0x68 (plus the DS3231 module's on-board AT24C32 EEPROM at 0x57, unallocated).
+- PN532 answered GetFirmwareVersion (IC 0x32, firmware 1.6) and accepted SAMConfiguration.
+- Card reads: UID 17C410C2 returned identically on three consecutive polls via the
+  non-blocking start_listen / read_uid path main._run() uses.
+- Standalone boot on the deployed build logged `BOOT,fw=0.2.0+mp rev=1`; with no terminal.conf
+  present, _network_init() disabled networking without faulting, as designed.
+- End-to-end taps: known card granted with auto-toggled direction (OUT then IN) and recorded
+  to attendance.csv; unknown card E73624C2 correctly DENIED with no direction.
+- Wi-Fi check-in against a LAN manifest server: association and first check-in 7 s after boot;
+  server access log received `GET /manifest.json?id=dev-bench&fw=0.2.0&rev=1`; terminal logged
+  `SYNC,rev 2 available (local 1)` — the correct comparison of manifest rev 2 to local rev 1.
 
 ## [0.1.2+mp] — merged (PR #3)
 
