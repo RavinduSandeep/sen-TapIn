@@ -146,6 +146,7 @@ cooperative 20 ms tick. Never put a blocking call in the tap path.
 - [ ] Comments explain reasoning, not mechanics. `# increment counter` is noise;
       `# commit the toggle only once the record is on the card` is the comment worth writing
 
+
 ## A note on review
 
 Expect changes to come back with questions. That is the review working, not a judgement of you.
